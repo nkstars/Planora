@@ -1,192 +1,107 @@
-# Planora AI
+# Planora AI — Celebration & Event Planner
 
-**Planora AI** is an elegant, AI-powered event planning application for weddings, birthdays, anniversaries, and community events. It turns event details, preferences, guest count, date, and budget into an actionable plan — complete with personalized ideas, a budget allocation, a preparation timeline, and a vendor checklist.
+**Plan your celebration. Personalize the details. Keep the budget in view.**
 
-Built for **PromptWars Challenge 5: Celebration & Event Planner**.
+Planora AI is a responsive event-planning web app built for **PromptWars Challenge 5: Celebration & Event Planner**. It helps users organize weddings, birthdays, anniversaries, and community events in one workspace.
 
----
+🌐 **Live demo:** https://planora-ai-event-pla-wqvx.bolt.host/  
+💻 **Source code:** https://github.com/nkstars/Planora
 
 ## Features
 
-- **Dashboard** — welcome overview with event summary cards, budget utilization, task-completion progress, upcoming deadlines, and a first-time empty state.
-- **Guided event creation** — a polished multi-step form collecting event type, name, date, location, guest count, budget (with currency, defaulting to INR), theme, style, color palette, dietary preferences, planning priorities, and notes. Includes validation, back/next navigation, a progress indicator, and a review step.
-- **AI event planner** — generates a structured, event-specific plan: concept, personalized theme, decor/food/entertainment/activity ideas, budget breakdown, preparation timeline, vendor checklist, cost-saving tips, and an event-day schedule. Powered by a deterministic local planning engine that works without any API key.
-- **Budget planner** — editable category-wise breakdown, live remaining-budget calculation, overspend flagging, and cost-saving suggestions.
-- **Timeline** — chronological preparation milestones with deadlines, status, overdue highlighting, and one-click completion.
-- **Vendor & task manager** — tasks grouped by category with search and filters; add/edit/delete/complete; track vendor name, contact, estimated cost, booking status (Suggested → Contacted → Confirmed), and notes.
-- **Personalized ideas** — theme, decor, menu, entertainment, and activity recommendations with a revise-plan action that regenerates the plan when event details change.
-- **Sample event** — a clearly labelled demo event (a wedding) so evaluators can explore the full app instantly. A reset action clears all data.
-- **Persistence** — all events, budgets, tasks, timeline progress, and edits are saved to `localStorage` and restored on reload.
+- **Event setup:** Create an event with its type, date, location, guest count, budget, theme, style, dietary preferences, and planning priorities.
+- **Planning dashboard:** Review event summaries, budget utilization, task progress, and upcoming deadlines.
+- **Structured event plans:** Generate theme ideas, decorations, food, entertainment, activities, budget allocations, preparation milestones, vendor tasks, cost-saving tips, and an event-day schedule.
+- **Budget planner:** Edit category allocations, track the remaining budget, and identify potential overspending.
+- **Preparation timeline:** View milestones chronologically and track task completion.
+- **Vendor and task management:** Add, edit, search, filter, and complete tasks; record vendor details, estimated costs, booking status, and notes.
+- **Personalized ideas:** Explore themes, decor, menus, entertainment, and activities.
+- **Sample event:** Explore a sample wedding plan without completing the setup flow.
+- **Local persistence:** Event data and supported edits are saved in browser `localStorage`.
+- **Responsive design:** Designed for desktop, tablet, and mobile screens.
 
----
+## Current AI status
 
-## Design
+The current version uses a **deterministic local planning engine** to generate structured, event-specific suggestions without an API key or network request. It does **not currently call a live Gemini or other GenAI API**.
 
-Planora uses a premium editorial SaaS aesthetic:
+This makes the prototype usable without external credentials, while a secure server-side GenAI integration remains a potential enhancement. Private API keys should never be placed in client-side code or a public repository.
 
-- **Palette:** warm ivory backgrounds, muted sage green, charcoal text, and subtle champagne-gold accents.
-- **Typography:** *Cormorant Garamond* serif for headings, *Plus Jakarta Sans* for body.
-- **Details:** generous whitespace, rounded cards, delicate borders, soft shadows, restrained hover animations, visible focus states, and a responsive layout from mobile to desktop.
-
----
+Budget figures are planning estimates, not verified vendor quotes. Suggested vendor tasks do not mean a vendor has been contacted or booked.
 
 ## Tech stack
 
-| Layer | Choice |
-|------|--------|
-| Framework | React 18 + TypeScript |
-| Build tool | Vite 7 |
-| Styling | Tailwind CSS 3 |
+| Area | Technology |
+| --- | --- |
+| UI | React 18 |
+| Language | TypeScript |
+| Build tool | Vite |
+| Styling | Tailwind CSS |
 | Icons | Lucide React |
-| State | React Context + `localStorage` |
-| Testing | Vitest |
+| State and persistence | React Context and browser `localStorage` |
+| Tests | Vitest |
 
-No API keys or secrets are stored in the source code.
-
----
-
-## Architecture
-
-```
-src/
-├── App.tsx                    # Root: provider + view router
-├── main.tsx                   # Entry point
-├── index.css                  # Tailwind layers + design tokens
-├── types/
-│   ├── index.ts               # Event, Budget, Task, Timeline, Plan, Recommendation types
-│   └── nav.ts                 # View navigation type
-├── lib/
-│   ├── constants.ts           # Event metadata, options, currency symbols
-│   ├── format.ts              # Money/date formatting, date math, helpers
-│   ├── storage.ts             # localStorage load/save/clear
-│   ├── sampleData.ts          # Demo event factory
-│   ├── planner.ts             # EventPlannerService interface + local planning engine
-│   └── __tests__/planner.test.ts
-├── context/
-│   └── AppContext.tsx         # Global state: events, plans, tasks, timeline, budgets
-├── components/
-│   ├── CreateEventForm.tsx    # Multi-step guided form
-│   ├── layout/
-│   │   └── Layout.tsx         # Sidebar + mobile nav + header
-│   └── ui/
-│       ├── Banner.tsx         # Info / success / warning / error banner
-│       ├── ConfirmDialog.tsx  # Confirmation modal for destructive actions
-│       ├── EmptyState.tsx     # Empty-state component
-│       ├── EventTypeBadge.tsx # Event type chip
-│       ├── Modal.tsx          # Accessible modal dialog
-│       ├── Progress.tsx       # Progress bar
-│       └── Spinner.tsx        # Loading spinner
-└── views/
-    ├── DashboardView.tsx
-    ├── MyEventsView.tsx
-    ├── BudgetView.tsx
-    ├── TimelineView.tsx
-    ├── VendorsView.tsx
-    └── IdeasView.tsx
-```
-
-### Planning engine — modular AI interface
-
-`src/lib/planner.ts` exports an `EventPlannerService` interface:
-
-```ts
-export interface EventPlannerService {
-  generatePlan(event: EventDetails, existingTasks?: Task[]): Promise<Plan>;
-  revisePlan(event: EventDetails, currentPlan: Plan): Promise<Plan>;
-  readonly source: 'local-engine' | 'gemini-api';
-}
-```
-
-The default implementation, `localPlanner`, is a **deterministic local engine** that produces sensible, event-specific results without any network call. Its `source` is `'local-engine'`, and the UI transparently labels generated ideas as coming from the built-in engine — it never claims a real AI API was contacted.
-
-To connect a Gemini API later, implement the same interface in a new module (e.g. `geminiPlanner.ts`) and swap it in where `localPlanner` is used. Keep the API key on a server (e.g. a Supabase Edge Function) — never expose it in frontend code.
-
-### State management
-
-`AppContext` is the single source of truth. It holds events, plans, tasks, timeline, and budgets, persists the entire state to `localStorage` on every change, and exposes typed actions for creating, updating, and deleting entities. Views read from and write to this context, so navigating between views never loses data.
-
----
-
-## Getting started
+## Run locally
 
 ### Prerequisites
 
-- Node.js 18+ and npm
+- Node.js 18 or later
+- npm
 
-### Install & run
+### Install and start
 
 ```bash
+git clone https://github.com/nkstars/Planora.git
+cd Planora
 npm install
 npm run dev
 ```
 
-The dev server starts at the URL printed in the terminal.
+Open the local URL printed by Vite in your terminal.
 
-### Build for production
-
-```bash
-npm run build
-npm run preview
-```
-
-The production build is output to `dist/`.
-
----
-
-## Testing
+### Available scripts
 
 ```bash
-npm test
+npm run dev       # Start development server
+npm run build     # Create production build
+npm run preview   # Preview production build
+npm run lint      # Run ESLint
+npm run typecheck # Run TypeScript checks
+npm test          # Run Vitest tests
 ```
 
-Tests cover:
+## How to explore
 
-- **Format utilities** — `clamp`, `pct`, `formatMoney`, `formatMoneyShort`, `addDays`, `daysUntil`.
-- **Budget generation** — category allocations sum exactly to the total budget; every allocation is non-negative; the profile adapts to event type.
-- **Timeline generation** — milestones are non-empty and sorted chronologically.
-- **Recommendations** — every section (decor, menu, entertainment, activities, cost-saving tips, event-day schedule) is populated.
-- **Task generation** — all generated tasks start as `suggested` and `not-started`.
+1. Open the [live demo](https://planora-ai-event-pla-wqvx.bolt.host/).
+2. Load the sample event or create a new event.
+3. Review the generated plan and budget breakdown.
+4. Edit allocations and track preparation tasks.
+5. Explore the timeline, vendor/task manager, and ideas views.
+6. Refresh the page to check locally saved progress.
 
----
+Use the app's reset option to clear the demo data and start again.
+
+## Design
+
+Planora uses a premium editorial-style interface with warm ivory backgrounds, muted sage green, charcoal text, and champagne-gold accents. The layout features generous spacing, rounded cards, subtle borders, and restrained hover effects.
+
+## Project structure
+
+The application separates typed models, shared application state, reusable UI components, dedicated views, planning logic, and browser persistence into organized modules.
 
 ## Deployment
 
-Planora is a static SPA and can be deployed to any static host.
+The live prototype is hosted on Bolt:
 
-### General steps
+https://planora-ai-event-pla-wqvx.bolt.host/
 
-1. `npm run build` — produces the `dist/` folder.
-2. Upload `dist/` to your host (Vercel, Netlify, Cloudflare Pages, GitHub Pages, etc.).
-3. Set the SPA fallback / rewrite so all routes serve `index.html`.
+For a separate static deployment, run `npm run build` and deploy the generated `dist/` directory to a compatible static host. Configure SPA fallback routing if required.
 
-### Netlify (`netlify.toml`)
+## Built for PromptWars
 
-```toml
-[build]
-  command = "npm run build"
-  publish = "dist"
+**Challenge 5 — Celebration & Event Planner**
 
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
-```
-
-### Vercel
-
-No config needed — Vercel auto-detects Vite. The output directory is `dist`.
+Planora explores how an interactive planning workspace can help people turn event requirements into a clear, budget-aware plan.
 
 ---
 
-## Notes for evaluators
-
-- Click **"Load demo event"** on the dashboard to instantly explore a fully-planned wedding with budget, timeline, vendors, and ideas.
-- Use **Reset all data** (bottom of the sidebar) to clear everything and start fresh.
-- All planning suggestions are generated by the built-in local engine and are clearly labelled as such — they are **not** verified vendor quotes or real-world bookings. The vendor checklist distinguishes *Suggested* tasks from *Contacted* and *Confirmed* bookings.
-- No fake vendor listings or unsupported claims are included.
-
----
-
-## License
-
-MIT
+**Planora AI — Make every celebration easier to plan.**
